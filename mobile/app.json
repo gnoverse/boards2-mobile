@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "dsocial",
-    "slug": "dsocial",
+    "name": "boards2",
+    "slug": "boards2",
     "platforms": ["ios", "android"],
     "version": "1.0.0",
     "sdkVersion": "52.0.0",
     "orientation": "portrait",
-    "scheme": "tech.berty.dsocial",
+    "scheme": "tech.berty.boards2",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
     "splash": {
@@ -17,7 +17,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "tech.berty.dsocial.ios",
+      "bundleIdentifier": "tech.berty.boards2.ios",
       "infoPlist": {
         "CFBundleAllowMixedLocalizations": true,
         "NSAppTransportSecurity": {
@@ -39,7 +39,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "tech.berty.dsocial.android",
+      "package": "tech.berty.boards2.android",
       "versionCode": "12"
     },
     "web": {
