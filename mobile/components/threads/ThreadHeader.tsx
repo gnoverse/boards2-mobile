@@ -9,7 +9,6 @@ import { ThreadCount } from '../list/ThreadCount'
 interface ThreadHeaderProps {
   breadcrumbItems: string[]
   onCreateThread: () => void
-  canCreate?: boolean
   title?: string
   creatorName: string
   threadCount?: number
