@@ -2,7 +2,7 @@ import { UserCacheApi } from '@gno/hooks/use-user-cache'
 import { Post } from '@gno/types'
 import { GnoNativeApi } from '@gnolang/gnonative'
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
-import { ThunkExtra, Board, RootState, selectAccount } from '@gno/redux'
+import { ThunkExtra, Board } from '@gno/redux'
 import { countThreadPosts, fetchThreadPosts, subtractOrZero } from '@gno/redux'
 
 interface ThreadsState {
@@ -55,8 +55,6 @@ export const threadsSlice = createSlice({
     selectThreadById: (state: ThreadsState, id: number | string) => state.threads.find((thread) => thread.id === Number(id))
   }
 })
-
-// export const {} = threadsSlice.actions
 
 export const { selectThreads, selectThreadLoading, selectThreadBoard, selectThreadById } = threadsSlice.selectors
 
