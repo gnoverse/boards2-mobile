@@ -46,39 +46,39 @@ export async function qEvalGetPosts(
   startIndex: number,
   endIndex: number
 ): Promise<string> {
-  const postInfos = await gnonative.qEval(PACKAGE_PATH, `GetPosts(${boardId},${threadId},${postId},${startIndex},${endIndex})`)
-  const totalRegex = /^\((\d+) int\)/g
-  const totalMatch = totalRegex.exec(postInfos)
-  if (!totalMatch) throw new Error("Can't find total in GetPosts response")
+  const postInfos = await gnonative.qEval(PACKAGE_PATH, `GetThreads(${boardId},${startIndex},${endIndex-startIndex})`)
+  const boardThreadCount = await gnonative.qEval(PACKAGE_PATH, `GetBoard(${boardId})`)
+  const totalRegex = /\(struct{\(\d+ uint64\),\("[^"]+" string\),\(nil \[\]string\),\(\w+ bool\),\((\d+) int\),\(\d+ int\),\("\w+" \.uverse\.address\),\(\d+ int64\),\(\d+ int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Board\)/g
+  const totalMatch = totalRegex.exec(boardThreadCount)
+  if (!totalMatch) throw new Error("Can't find thread count in GetBoard response")
   const total = Number(totalMatch![1])
 
   const postRegex =
-    /\(struct{\((\d+) gno\.land\/p\/gnoland\/boards\.ID\),\((\d+) gno\.land\/p\/gnoland\/boards\.ID\),\("(\w+)" .uverse.address\),\("([^"]*)" string\),\("([^"]*)" string\),\((\w+) bool\),\((\w+) bool\),\((\d+) gno\.land\/p\/gnoland\/boards\.ID\),\((\d+) gno\.land\/p\/gnoland\/boards\.ID\),\((\d+) gno\.land\/p\/gnoland\/boards\.ID\),\((\d+) int\),\((\d+) int\),\((\d+) int\),\("([^"]+)" string\)} gno.land\/r\/gnoland\/boards2\/v1.PostInfo\)/g
+    /\(struct{\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\("([^"]*)" string\),\("([^"]*)" string\),\((\w+) bool\),\((\w+) bool\),\((\d+) int\),\(\d+ int\),\(\d+ int\),\("(\w+)" \.uverse\.address\),\((\d+) int64\),\((\d+) int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Thread\)/g
   let posts = []
   let index = 0
   let match
   while ((match = postRegex.exec(postInfos)) !== null) {
     const postId = Number(match[1])
-    const boardId = Number(match[2])
-    const createdAt = match[14]
-    const creator = match[3]
-    const n_replies = Number(match[11])
-    const n_replies_all = Number(match[12])
-    const thread_id = Number(match[8])
-    const parent_id = Number(match[9])
-    const hidden = match[6] === 'true'
-    let title = match[4]
-    let body = match[5]
-    if (hidden) {
-      if (parent_id === 0)
-        // Don't show hidden threads
-        continue
-      else title = '⚠ Reply is hidden as it has been flagged as inappropriate'
-      body = title
-    }
+    const originalBoardId = Number(match[2])
+    const originalThreadId = Number(match[3])
+    const boardId = Number(match[4])
+    const title = match[5]
+    const body = match[6]
+    const hidden  = match[7] === 'true'
+    const readOnly = match[8] === 'true'
+    const n_replies = Number(match[9])
+    const n_replies_all = 0// Number(match[14])
+    const creator = match[10]
+    const createdAtUnix = Number(match[11])
+    const createdAt = new Date(createdAtUnix * 1000).toISOString()
+    const updatedAtUnix = Number(match[12])
+    const updatedAt = new Date(updatedAtUnix * 1000).toISOString()
+    const thread_id = 0// Number(match[10])
+    const parent_id = 0// Number(match[11])
     posts.push({
       index,
-      post: { id: postId, boardId, createdAt, creator, n_gnods: 0, n_replies, n_replies_all, thread_id, parent_id, title, body }
+      post: { id: postId, originalBoardId, originalThreadId, boardId, createdAt, creator, n_gnods: 0, n_replies, n_replies_all, thread_id, parent_id, title, body }
     })
     ++index
   }
