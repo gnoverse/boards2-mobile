@@ -46,9 +46,10 @@ export async function qEvalGetPosts(
   startIndex: number,
   endIndex: number
 ): Promise<string> {
-  const postInfos = await gnonative.qEval(PACKAGE_PATH, `GetThreads(${boardId},${startIndex},${endIndex-startIndex})`)
+  const postInfos = await gnonative.qEval(PACKAGE_PATH, `GetThreads(${boardId},${startIndex},${endIndex - startIndex})`)
   const boardThreadCount = await gnonative.qEval(PACKAGE_PATH, `GetBoard(${boardId})`)
-  const totalRegex = /\(struct{\(\d+ uint64\),\("[^"]+" string\),\(nil \[\]string\),\(\w+ bool\),\((\d+) int\),\(\d+ int\),\("\w+" \.uverse\.address\),\(\d+ int64\),\(\d+ int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Board\)/g
+  const totalRegex =
+    /\(struct{\(\d+ uint64\),\("[^"]+" string\),\(nil \[\]string\),\(\w+ bool\),\((\d+) int\),\(\d+ int\),\("\w+" \.uverse\.address\),\(\d+ int64\),\(\d+ int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Board\)/g
   const totalMatch = totalRegex.exec(boardThreadCount)
   if (!totalMatch) throw new Error("Can't find thread count in GetBoard response")
   const total = Number(totalMatch![1])
@@ -65,17 +66,17 @@ export async function qEvalGetPosts(
     const boardId = Number(match[4])
     const title = match[5]
     const body = match[6]
-    const hidden  = match[7] === 'true'
+    const hidden = match[7] === 'true'
     const readOnly = match[8] === 'true'
     const n_replies = Number(match[9])
-    const n_replies_all = 0// Number(match[14])
+    const n_replies_all = 0 // Number(match[14])
     const creator = match[10]
     const createdAtUnix = Number(match[11])
     const createdAt = new Date(createdAtUnix * 1000).toISOString()
     const updatedAtUnix = Number(match[12])
     const updatedAt = new Date(updatedAtUnix * 1000).toISOString()
-    const thread_id = 0// Number(match[10])
-    const parent_id = 0// Number(match[11])
+    const thread_id = 0 // Number(match[10])
+    const parent_id = 0 // Number(match[11])
     posts.push({
       index,
       post: {

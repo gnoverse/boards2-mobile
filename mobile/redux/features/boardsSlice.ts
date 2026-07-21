@@ -116,7 +116,7 @@ async function listBoards(thunkAPI: ThunkExtra, startIndex: number, endIndex: nu
   const gnonative = thunkAPI.extra.gnonative as GnoNativeApi
   const userCache = thunkAPI.extra.userCache as UserCacheApi
 
-  const boardInfos = await gnonative.qEval(PACKAGE_PATH, `GetBoards(${startIndex},${endIndex-startIndex})`)
+  const boardInfos = await gnonative.qEval(PACKAGE_PATH, `GetBoards(${startIndex},${endIndex - startIndex})`)
   const boardCount = await gnonative.qEval(PACKAGE_PATH, `BoardCount()`)
   const totalRegex = /^\((\d+) int\)/g
   const totalMatch = totalRegex.exec(boardCount)
