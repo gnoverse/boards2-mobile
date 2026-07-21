@@ -127,8 +127,6 @@ export const useFeed = () => {
       n_replies_all: jsonPost.n_replies_all,
       createdAt: jsonPost.createdAt,
       updatedAt: jsonPost.updatedAt,
-      thread_id: jsonPost.thread_id,
-      parent_id: jsonPost.parent_id,
       repost_parent
     }
 

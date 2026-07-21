@@ -75,8 +75,6 @@ export async function qEvalGetPosts(
     const createdAt = new Date(createdAtUnix * 1000).toISOString()
     const updatedAtUnix = Number(match[12])
     const updatedAt = new Date(updatedAtUnix * 1000).toISOString()
-    const thread_id = 0 // Number(match[10])
-    const parent_id = 0 // Number(match[11])
     posts.push({
       index,
       post: {
@@ -93,9 +91,7 @@ export async function qEvalGetPosts(
         n_replies_all,
         creator,
         createdAt,
-        updatedAt,
-        thread_id,
-        parent_id
+        updatedAt
       }
     })
     ++index
@@ -172,8 +168,6 @@ function convertToPost(jsonPost: any, creator: User, repost_parent?: ParentPost)
     n_replies_all: jsonPost.n_replies_all,
     createdAt: jsonPost.createdAt,
     updatedAt: jsonPost.updatedAt,
-    thread_id: jsonPost.thread_id,
-    parent_id: jsonPost.parent_id,
     repost_parent
   }
 

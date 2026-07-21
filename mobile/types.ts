@@ -15,8 +15,6 @@ type PostInterface = {
   n_replies_all: number
   createdAt: string
   updatedAt: string
-  thread_id: number
-  parent_id: number
 }
 export type ParentPost = PostInterface
 
