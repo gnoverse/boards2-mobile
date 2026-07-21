@@ -104,7 +104,10 @@ export async function qEvalGetComments(
   startIndex: number,
   endIndex: number
 ): Promise<string> {
-  const commentInfos = await gnonative.qEval(PACKAGE_PATH, `GetComments(${boardId},${threadId},${startIndex},${endIndex - startIndex})`)
+  const commentInfos = await gnonative.qEval(
+    PACKAGE_PATH,
+    `GetComments(${boardId},${threadId},${startIndex},${endIndex - startIndex})`
+  )
   /*
   const boardThreadCount = await gnonative.qEval(PACKAGE_PATH, `GetBoard(${boardId})`)
   const totalRegex =
@@ -116,7 +119,7 @@ export async function qEvalGetComments(
   const total = 4
 
   const commentRegex =
-     /\(struct{\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\("([^"]*)" string\),\((\w+) bool\),\((\d+) int\),\(\d+ int\),\("(\w+)" \.uverse\.address\),\((\d+) int64\),\((\d+) int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Comment\)/g
+    /\(struct{\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\("([^"]*)" string\),\((\w+) bool\),\((\d+) int\),\(\d+ int\),\("(\w+)" \.uverse\.address\),\((\d+) int64\),\((\d+) int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Comment\)/g
   let comments = []
   let index = 0
   let match
@@ -125,7 +128,7 @@ export async function qEvalGetComments(
     const boardId = Number(match[2])
     const originalThreadId = Number(match[3])
     const originalBoardId = Number(match[4])
-    const title = ""
+    const title = ''
     const body = match[5]
     const hidden = match[6] === 'true'
     const readOnly = false
