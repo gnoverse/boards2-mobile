@@ -12,7 +12,6 @@ type PostInterface = {
   readOnly: boolean
   n_replies: number
   n_gnods: number
-  n_replies_all: number
   createdAt: string
   updatedAt: string
 }

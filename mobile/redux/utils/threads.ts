@@ -67,7 +67,6 @@ export async function qEvalGetPosts(
     const hidden = match[7] === 'true'
     const readOnly = match[8] === 'true'
     const n_replies = Number(match[9])
-    const n_replies_all = 0 // Number(match[14])
     const creator = match[10]
     const createdAtUnix = Number(match[11])
     const createdAt = new Date(createdAtUnix * 1000).toISOString()
@@ -86,7 +85,6 @@ export async function qEvalGetPosts(
         readOnly,
         n_replies,
         n_gnods: 0,
-        n_replies_all,
         creator,
         createdAt,
         updatedAt
@@ -132,7 +130,6 @@ export async function qEvalGetComments(
     const hidden = match[6] === 'true'
     const readOnly = false
     const n_replies = Number(match[7])
-    const n_replies_all = 0 // Number(match[14])
     const creator = match[8]
     const createdAtUnix = Number(match[9])
     const createdAt = new Date(createdAtUnix * 1000).toISOString()
@@ -151,7 +148,6 @@ export async function qEvalGetComments(
         readOnly,
         n_replies,
         n_gnods: 0,
-        n_replies_all,
         creator,
         createdAt,
         updatedAt
@@ -228,7 +224,6 @@ function convertToPost(jsonPost: any, creator: User, repost_parent?: ParentPost)
     readOnly: jsonPost.readOnly,
     n_replies: jsonPost.n_replies,
     n_gnods: jsonPost.n_gnods,
-    n_replies_all: jsonPost.n_replies_all,
     createdAt: jsonPost.createdAt,
     updatedAt: jsonPost.updatedAt,
     repost_parent
