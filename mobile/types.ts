@@ -2,14 +2,19 @@ import { KeyInfo } from '@gnolang/gnonative'
 
 type PostInterface = {
   user: User
+  id: number
+  originalBoardId: number
+  originalThreadId: number
+  boardId: number
   title: string
   body: string
-  boardId: number
-  createdAt: string
-  id: number
+  hidden: boolean
+  readOnly: boolean
   n_replies: number
   n_gnods: number
   n_replies_all: number
+  createdAt: string
+  updatedAt: string
   thread_id: number
   parent_id: number
 }

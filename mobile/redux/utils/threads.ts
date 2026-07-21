@@ -78,7 +78,24 @@ export async function qEvalGetPosts(
     const parent_id = 0// Number(match[11])
     posts.push({
       index,
-      post: { id: postId, originalBoardId, originalThreadId, boardId, createdAt, creator, n_gnods: 0, n_replies, n_replies_all, thread_id, parent_id, title, body }
+      post: {
+        id: postId,
+        originalBoardId,
+        originalThreadId,
+        boardId,
+        title,
+        body,
+        hidden,
+        readOnly,
+        n_replies,
+        n_gnods: 0,
+        n_replies_all,
+        creator,
+        createdAt,
+        updatedAt,
+        thread_id,
+        parent_id
+      }
     })
     ++index
   }
@@ -142,13 +159,18 @@ function convertToPost(jsonPost: any, creator: User, repost_parent?: ParentPost)
       bech32: ''
     },
     id: jsonPost.id,
+    originalBoardId: jsonPost.originalBoardId,
+    originalThreadId: jsonPost.originalThreadId,
     boardId: jsonPost.boardId,
-    createdAt: jsonPost.createdAt,
     title: jsonPost.title,
     body: jsonPost.body,
+    hidden: jsonPost.hidden,
+    readOnly: jsonPost.readOnly,
     n_replies: jsonPost.n_replies,
     n_gnods: jsonPost.n_gnods,
     n_replies_all: jsonPost.n_replies_all,
+    createdAt: jsonPost.createdAt,
+    updatedAt: jsonPost.updatedAt,
     thread_id: jsonPost.thread_id,
     parent_id: jsonPost.parent_id,
     repost_parent

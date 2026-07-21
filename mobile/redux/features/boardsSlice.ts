@@ -69,11 +69,13 @@ type BoardsResult = {
 export type Board = {
   id: number
   name: string
+  readOnly: boolean
+  n_threads: number
+  n_members: number
   creator: string
   creatorName?: User
-  hidden: boolean
-  n_threads: number
   createdAt: string
+  updatedAt: string
 }
 
 type BoardsRequest = {
@@ -139,11 +141,9 @@ async function listBoards(thunkAPI: ThunkExtra, startIndex: number, endIndex: nu
     const createdAt = new Date(createdAtUnix * 1000).toISOString()
     const updatedAtUnix = Number(match[8])
     const updatedAt = new Date(updatedAtUnix * 1000).toISOString()
-    // TODO: hidden
-    const hidden = false
     boards.push({
       index,
-      board: { id: boardId, name, creator, hidden, n_threads, createdAt, creatorName }
+      board: { id: boardId, name, readOnly, n_threads, n_members, creator, creatorName, createdAt, updatedAt }
     })
     ++index
   }
