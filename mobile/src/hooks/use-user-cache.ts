@@ -1,4 +1,5 @@
 import { User } from '@gno/types'
+import { getAccountName } from '@gno/redux'
 import { useGnoNativeContext } from '@gnolang/gnonative'
 
 const usersCache = new Map<string, User>()
@@ -19,17 +20,7 @@ export const useUserCache = () => {
       return usersCache.get(bech32) as User
     }
 
-    let name = bech32
-    try {
-      const result = await gnonative.qEval('gno.land/r/sys/users', `ResolveAddress("${bech32}")`)
-      const match = result.match(/\("\w+" \.uverse\.address\),\("([^"]+)" string\)/)
-      if (match) {
-        name = match[1]
-      }
-    } catch (error) {
-      console.error('Error in ResolveAddress', error)
-    }
-
+    let name = await getAccountName(bech32, gnonative)
     const response = await gnonative.qEval('gno.land/r/demo/profile', `GetStringField("${bech32}","Avatar", "${DEFAULT_AVATAR}")`)
     const bech32Image = response.substring(2, response.length - '" string)'.length)
 
