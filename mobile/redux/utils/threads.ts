@@ -13,13 +13,13 @@ export async function fetchThreadPosts(
   startIndex: number,
   endIndex: number
 ): Promise<ThreadPosts> {
-  const result = await qEvalGetPosts(gnonative, boardId, 0, 0, startIndex, endIndex)
+  const result = await qEvalGetPosts(gnonative, boardId, startIndex, endIndex)
   const json = await enrichData(userCache, gnonative, result)
   return json
 }
 
-// Return the posts in a specific thread.
-export async function fetchThreadPostDetail(
+// Return the "comment" posts in a specific thread.
+export async function fetchThreadComments(
   userCache: UserCacheApi,
   gnonative: GnoNativeApi,
   boardId: number,
@@ -27,13 +27,13 @@ export async function fetchThreadPostDetail(
   startIndex: number,
   endIndex: number
 ): Promise<ThreadPosts> {
-  const result = await qEvalGetPosts(gnonative, boardId, threadId, 0, startIndex, endIndex)
+  const result = await qEvalGetComments(gnonative, boardId, threadId, startIndex, endIndex)
   const json = await enrichData(userCache, gnonative, result)
   return json
 }
 
 export async function countThreadPosts(userCache: UserCacheApi, gnonative: GnoNativeApi, boardId: number): Promise<number> {
-  const result = await qEvalGetPosts(gnonative, boardId, 0, 0, 0, 0)
+  const result = await qEvalGetPosts(gnonative, boardId, 0, 0)
   const { n_posts } = await enrichData(userCache, gnonative, result)
   return n_posts
 }
@@ -41,8 +41,6 @@ export async function countThreadPosts(userCache: UserCacheApi, gnonative: GnoNa
 export async function qEvalGetPosts(
   gnonative: GnoNativeApi,
   boardId: number,
-  threadId: number,
-  postId: number,
   startIndex: number,
   endIndex: number
 ): Promise<string> {
@@ -60,7 +58,7 @@ export async function qEvalGetPosts(
   let index = 0
   let match
   while ((match = postRegex.exec(postInfos)) !== null) {
-    const postId = Number(match[1])
+    const id = Number(match[1])
     const originalBoardId = Number(match[2])
     const originalThreadId = Number(match[3])
     const boardId = Number(match[4])
@@ -78,7 +76,7 @@ export async function qEvalGetPosts(
     posts.push({
       index,
       post: {
-        id: postId,
+        id,
         originalBoardId,
         originalThreadId,
         boardId,
@@ -98,6 +96,71 @@ export async function qEvalGetPosts(
   }
 
   let data = { n_threads: total, posts: posts }
+  return '(' + JSON.stringify(JSON.stringify(data)) + ' string)'
+}
+
+export async function qEvalGetComments(
+  gnonative: GnoNativeApi,
+  boardId: number,
+  threadId: number,
+  startIndex: number,
+  endIndex: number
+): Promise<string> {
+  const commentInfos = await gnonative.qEval(PACKAGE_PATH, `GetComments(${boardId},${threadId},${startIndex},${endIndex - startIndex})`)
+  /*
+  const boardThreadCount = await gnonative.qEval(PACKAGE_PATH, `GetBoard(${boardId})`)
+  const totalRegex =
+    /\(struct{\(\d+ uint64\),\("[^"]+" string\),\(nil \[\]string\),\(\w+ bool\),\((\d+) int\),\(\d+ int\),\("\w+" \.uverse\.address\),\(\d+ int64\),\(\d+ int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Board\)/g
+  const totalMatch = totalRegex.exec(boardThreadCount)
+  if (!totalMatch) throw new Error("Can't find thread count in GetBoard response")
+  const total = Number(totalMatch![1])
+  */
+  const total = 4
+
+  const commentRegex =
+     /\(struct{\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\((\d+) uint64\),\("([^"]*)" string\),\((\w+) bool\),\((\d+) int\),\(\d+ int\),\("(\w+)" \.uverse\.address\),\((\d+) int64\),\((\d+) int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Comment\)/g
+  let comments = []
+  let index = 0
+  let match
+  while ((match = commentRegex.exec(commentInfos)) !== null) {
+    const id = Number(match[1])
+    const boardId = Number(match[2])
+    const originalThreadId = Number(match[3])
+    const originalBoardId = Number(match[4])
+    const title = ""
+    const body = match[5]
+    const hidden = match[6] === 'true'
+    const readOnly = false
+    const n_replies = Number(match[7])
+    const n_replies_all = 0 // Number(match[14])
+    const creator = match[8]
+    const createdAtUnix = Number(match[9])
+    const createdAt = new Date(createdAtUnix * 1000).toISOString()
+    const updatedAtUnix = Number(match[10])
+    const updatedAt = new Date(updatedAtUnix * 1000).toISOString()
+    comments.push({
+      index,
+      post: {
+        id,
+        originalBoardId,
+        originalThreadId,
+        boardId,
+        title,
+        body,
+        hidden,
+        readOnly,
+        n_replies,
+        n_gnods: 0,
+        n_replies_all,
+        creator,
+        createdAt,
+        updatedAt
+      }
+    })
+    ++index
+  }
+
+  let data = { n_threads: total, posts: comments }
   return '(' + JSON.stringify(JSON.stringify(data)) + ' string)'
 }
 
