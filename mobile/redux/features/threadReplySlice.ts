@@ -49,9 +49,7 @@ export const threadReplyAndRedirectToSign = createAsyncThunk<void, CreateReplyRe
       const gasWanted = BigInt(50000000)
       const args: string[] = [String(boad.id), String(thread.id), '0', replyBody]
       const reason = 'Reply a message'
-      // const session = (thunkAPI.getState() as RootState).linking.session;
 
-      // await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath, session }, thunkAPI.extra.gnonative);
       await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
     } catch (error) {
       console.error('Error in threadReplyAndRedirectToSign thunk:', error)

@@ -9,7 +9,6 @@ interface BoardCardProps {
 }
 
 export const BoardCard = ({ board, onPress }: BoardCardProps) => {
-  // console.log('BoardCard board:', JSON.stringify(board))
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(board)}>
       <Text.Title3 style={styles.boardTitle}>{board.name}</Text.Title3>

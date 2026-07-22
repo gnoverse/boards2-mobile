@@ -30,10 +30,6 @@ export const threadsCreateSlice = createSlice({
   selectors: {}
 })
 
-// export const {} = threadsCreateSlice.actions
-
-// export const {} = threadsCreateSlice.selectors
-
 export type ThreadCreateParams = {
   boardId: string
   threadName: string

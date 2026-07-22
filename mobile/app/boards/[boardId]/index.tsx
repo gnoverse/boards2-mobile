@@ -39,13 +39,6 @@ export default function ThreadsPage() {
     dispatch(loadThreads({ board }))
   }
 
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (!board) return
-  //     dispatch(loadThreads({ board }))
-  //   }, [board, dispatch])
-  // )
-
   const handleReply = (thread: Post) => {
     dispatch(setThreadToReply(thread))
     router.push(`/boards/${thread.boardId}/threads/${thread.id}/reply?title=${thread.title}`)

@@ -12,11 +12,9 @@ interface Props {
 
 // TODO: reimplment this
 const ProgressViewModal: React.FC<Props> = ({ visible, onRequestClose }) => {
-  //const dispatch = useAppDispatch();
   const progress = ['<disabled>']
 
   const clear = async () => {
-    //await dispatch(clearProgress());
   }
 
   const share = async () => {
