@@ -27,31 +27,6 @@ export const threadReplySlice = createSlice({
 export const { setThreadToReply } = threadReplySlice.actions
 export const { selectThreadToReply } = threadReplySlice.selectors
 
-interface RepostTxAndRedirectParams {
-  post: Post
-  replyContent: string
-  callerAddressBech32: string
-}
-
-export const repostTxAndRedirectToSign = createAsyncThunk<void, RepostTxAndRedirectParams, ThunkExtra>(
-  'tx/repostTxAndRedirectToSign',
-  async (props, thunkAPI) => {
-    const { post, replyContent, callerAddressBech32 } = props
-
-    const fnc = 'RepostThread'
-    // post.user.address is in fact a bech32 address
-    const args: string[] = [String(post.user.address), String(post.id), replyContent]
-    const gasFee = '1000000ugnot'
-    const gasWanted = BigInt(10000000)
-    const reason = 'Repost a message'
-    const callbackPath = '/repost'
-    // const session = (thunkAPI.getState() as RootState).linking.session;
-
-    // await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath, session }, thunkAPI.extra.gnonative);
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
-  }
-)
-
 interface CreateReplyRequestParams {
   replyBody: string
   callbackPath: string
