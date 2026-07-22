@@ -24,11 +24,7 @@ export const ThreadHeaderSmall = ({
       <View style={styles.row}>
         <BackButton onPress={onBackPress} />
         <Breadcrumb size="small" items={breadcrumbItems} />
-        {/* <Text.Title3 style={styles.title}>{loading ? 'Loading...' : title}</Text.Title3> */}
       </View>
-      {/* <View style={styles.row}>
-        <CreatedBy creatorName={creatorName} createdAt={createdDate} loading={loading} />
-      </View> */}
     </View>
   )
 }

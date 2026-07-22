@@ -18,8 +18,6 @@ export const BoardCard = ({ board, onPress }: BoardCardProps) => {
         <Text.Body color="#ccc" style={styles.divider}>
           •
         </Text.Body>
-        {/* <Text.Label style={styles.threadCount}>{board.} replies</Text.Label> */}
-        {/* <Text.Label style={styles.threadCount}>{board.threadCount} threads</Text.Label> */}
       </View>
     </TouchableOpacity>
   )

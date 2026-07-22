@@ -27,14 +27,6 @@ export const BoardsHeader = ({
       <View style={styles.actions}>
         <ActionButton label="Create Board" onPress={onCreateBoard} icon="Add" disabled={!canCreate} />
         {/* TODO: Implement dynamic action renderer */}
-        {/* <Text.Body color="#ccc" style={styles.divider}>
-          •
-        </Text.Body>
-        <ActionButton label="List Admin Users" onPress={onListAdminUsers} />
-        <Text.Body color="#ccc" style={styles.divider}>
-          •
-        </Text.Body>
-        <ActionButton label="Help" onPress={onHelp} /> */}
       </View>
     </View>
   )

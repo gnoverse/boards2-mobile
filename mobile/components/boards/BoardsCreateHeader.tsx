@@ -22,7 +22,6 @@ export const BoardsCreateHeader = ({ breadcrumbItems, onBackPress, title = 'Boar
         <Breadcrumb items={breadcrumbItems} />
       </View>
       <View style={styles.actions}>
-        {/* <ActionButton label="Create Board" onPress={onCreateBoard} icon="Add" disabled={!canCreate} /> */}
       </View>
     </View>
   )

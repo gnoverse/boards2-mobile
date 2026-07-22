@@ -22,7 +22,6 @@ export const ThreadCreateHeader = ({ breadcrumbItems, onBackPress, title = 'Boar
         <Breadcrumb items={breadcrumbItems} size="small" />
       </View>
       <View style={styles.actions}>
-        {/* <ActionButton label="Create Board" onPress={onCreateBoard} icon="Add" disabled={!canCreate} /> */}
       </View>
     </View>
   )

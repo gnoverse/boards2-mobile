@@ -32,7 +32,6 @@ const AvatarPicker: React.FC<Props> = ({ onChanged }) => {
 
   return (
     <TouchableOpacity onPress={pickImage}>
-      {/* {base64Image ? <Avatar uri={base64Image} /> : null} */}
       {avatarBase64 ? <Avatar uri={avatarBase64} /> : null}
     </TouchableOpacity>
   )
