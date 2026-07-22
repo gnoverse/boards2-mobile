@@ -9,13 +9,6 @@ export default function DynamicLayout() {
       }}
     >
       <Stack.Screen name="index" />
-
-      <Stack.Screen
-        name="remove"
-        options={{
-          presentation: 'modal'
-        }}
-      />
     </Stack>
   )
 }
