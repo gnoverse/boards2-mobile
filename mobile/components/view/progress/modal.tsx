@@ -14,8 +14,7 @@ interface Props {
 const ProgressViewModal: React.FC<Props> = ({ visible, onRequestClose }) => {
   const progress = ['<disabled>']
 
-  const clear = async () => {
-  }
+  const clear = async () => {}
 
   const share = async () => {
     await Share.share({

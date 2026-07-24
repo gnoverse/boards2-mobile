@@ -21,8 +21,7 @@ export const ThreadCreateHeader = ({ breadcrumbItems, onBackPress, title = 'Boar
       <View style={styles.dividerGrey}>
         <Breadcrumb items={breadcrumbItems} size="small" />
       </View>
-      <View style={styles.actions}>
-      </View>
+      <View style={styles.actions}></View>
     </View>
   )
 }
