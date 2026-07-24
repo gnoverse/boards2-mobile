@@ -45,7 +45,6 @@ export function PostRow({ post, onPress = func, onGnod = func, showFooter = true
   if (post.originalThreadId === 0 && showFooter) {
     // For the top-level post, show the title
     content = post.title
-    nReplies = post.n_replies
   }
   return (
     <Pressable onPress={() => onPress(post)} style={styles.container}>
