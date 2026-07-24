@@ -111,7 +111,6 @@ export async function qEvalGetComments(
   const threadCommentCount = await gnonative.qEval(PACKAGE_PATH, `GetThread(${boardId},${threadId})`)
   const totalRegex =
     /\(struct{\(\d+ uint64\),\(\d+ uint64\),\(\d+ uint64\),\(\d+ uint64\),\("[^"]+" string\),\("[^"]+" string\),\(\w+ bool\),\(\w+ bool\),\((\d+) int\),\(\d+ int\),\(\d+ int\),\("\w+" \.uverse\.address\),\(\d+ int64\),\(\d+ int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Thread\)/g
-//  /\(struct{\(\d+ uint64\),\("[^"]+" string\),\(nil \[\]string\),\(\w+ bool\),\((\d+) int\),\(\d+ int\),\("\w+" \.uverse\.address\),\(\d+ int64\),\(\d+ int64\)} gno\.land\/p\/\w+\/boards\/exts\/hub\.Board\)/g
   const totalMatch = totalRegex.exec(threadCommentCount)
   if (!totalMatch) throw new Error("Can't find comment count in GetThread response")
   const total = Number(totalMatch![1])
