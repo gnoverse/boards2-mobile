@@ -8,7 +8,7 @@ export default function NotFound() {
       <Stack.Screen options={{ title: 'Not Found' }} />
       <View style={styles.container}>
         <Text.LargeTitle>This screen doesn&apos;t exist.</Text.LargeTitle>
-        <Link href="/home" style={styles.link}>
+        <Link href="/home/boards" style={styles.link}>
           <Text.Body>Go to home screen</Text.Body>
         </Link>
       </View>
