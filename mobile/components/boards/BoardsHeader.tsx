@@ -7,19 +7,10 @@ interface BoardsHeaderProps {
   breadcrumbItems: string[]
   onCreateBoard: () => void
   canCreate?: boolean
-  onListAdminUsers: () => void
-  onHelp: () => void
   title?: string
 }
 
-export const BoardsHeader = ({
-  breadcrumbItems,
-  onCreateBoard,
-  canCreate,
-  onListAdminUsers,
-  onHelp,
-  title
-}: BoardsHeaderProps) => {
+export const BoardsHeader = ({ breadcrumbItems, onCreateBoard, canCreate, title }: BoardsHeaderProps) => {
   return (
     <View style={styles.header}>
       <Breadcrumb items={breadcrumbItems} />
