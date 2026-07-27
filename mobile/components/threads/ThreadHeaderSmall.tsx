@@ -41,8 +41,5 @@ const styles = StyleSheet.create({
   title: {
     marginVertical: 0
   },
-  divider: {
-    marginHorizontal: 8
-  },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', alignContent: 'center' }
 })

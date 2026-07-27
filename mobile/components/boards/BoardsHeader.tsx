@@ -39,8 +39,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap'
-  },
-  divider: {
-    marginHorizontal: 8
   }
 })
