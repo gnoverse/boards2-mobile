@@ -1,31 +1,51 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
+import { createAppAsyncThunk } from '../utils/async-thunk'
+import { createSlice } from '@reduxjs/toolkit'
 import { makeCallTx } from './linkingSlice'
 import { User } from '@gno/types'
 import { GnoNativeApi } from '@gnolang/gnonative'
 import { RootState, ThunkExtra } from '@gno/redux'
+import { getActiveNetwork } from '@gno/utils/network-store'
 
 export interface CounterState {
   account?: User
   loading: boolean
+  /** Why the last sign-in failed, for the sign-in screen to show. Without it a
+   *  rejected `loggedIn` is silent in a release build: the user approves in the
+   *  wallet, comes back, and nothing happens. */
+  error?: string
 }
 
 const initialState: CounterState = {
   account: undefined,
-  loading: false
+  loading: false,
+  error: undefined
 }
 
-export const loggedIn = createAsyncThunk<User, void, ThunkExtra>('account/loggedIn', async (param, thunkAPI) => {
+export const loggedIn = createAppAsyncThunk<User, void, ThunkExtra>('account/loggedIn', async (param, thunkAPI) => {
   console.log('Logging in', param)
 
-  const { bech32AddressSelected: bech32, chainId, remoteURL } = (thunkAPI.getState() as RootState).linking
+  const { bech32AddressSelected: bech32, chainId } = (thunkAPI.getState() as RootState).linking
 
-  if (!bech32 || !chainId || !remoteURL) {
-    throw new Error('No bech32 address, chainId or remoteURL found for login')
+  // Only the address is required. `connect` returns no RPC endpoint by design,
+  // and the network is ours (see @gno/constants/networks) — demanding a
+  // remoteURL here made login throw on every GnoConnect sign-in.
+  if (!bech32) {
+    throw new Error('No bech32 address found for login')
   }
-  const gnonative = thunkAPI.extra.gnonative as GnoNativeApi
 
-  await gnonative.setChainID(chainId)
-  await gnonative.setRemote(remoteURL)
+  // The wallet does report which chain it is on. If that is not our chain it
+  // would sign for one network while we broadcast to another, so stop here
+  // rather than produce a signature that cannot land. `connect` now names the
+  // network we expect, so a wallet that honours it should already have switched.
+  const expectedChainId = getActiveNetwork().chainId
+  if (chainId && chainId !== expectedChainId) {
+    throw new Error(
+      `Your wallet is on chain "${chainId}" but this app expects "${expectedChainId}". ` +
+        `Switch the wallet's network, or pick a matching one here from the network settings.`
+    )
+  }
+
+  const gnonative = thunkAPI.extra.gnonative as GnoNativeApi
 
   const user: User = {
     name: await getAccountName(bech32, gnonative),
@@ -48,7 +68,9 @@ export async function getAccountName(bech32: string, gnonative: GnoNativeApi): P
       name = match[1]
     }
   } catch (error) {
-    console.error('Error getting account name', error)
+    // Best-effort as well: the name falls back to the bech32 below, and
+    // `gno.land/r/sys/users` is not deployed on every chain either.
+    console.log('No registered name for', bech32, '— using the address:', error)
   }
   return name
 }
@@ -60,7 +82,7 @@ interface AvatarCallTxParams {
   callbackPath: string
 }
 
-export const avatarTxAndRedirectToSign = createAsyncThunk<void, AvatarCallTxParams, ThunkExtra>(
+export const avatarTxAndRedirectToSign = createAppAsyncThunk<void, AvatarCallTxParams, ThunkExtra>(
   'account/avatarTxAndRedirectToSign',
   async (props, thunkAPI) => {
     const { mimeType, base64, callerAddressBech32, callbackPath } = props
@@ -88,7 +110,7 @@ export const avatarTxAndRedirectToSign = createAsyncThunk<void, AvatarCallTxPara
   }
 )
 
-export const reloadAvatar = createAsyncThunk<string | undefined, void, ThunkExtra>(
+export const reloadAvatar = createAppAsyncThunk<string | undefined, void, ThunkExtra>(
   'account/reloadAvatar',
   async (param, thunkAPI) => {
     const state = (await thunkAPI.getState()) as CounterState
@@ -110,7 +132,10 @@ const loadBech32AvatarFromChain = async (bech32: string, thunkAPI: ThunkExtra) =
     const response = await gnonative.qEval('gno.land/r/demo/profile', `GetStringField("${bech32}","Avatar", "${DEFAULT_AVATAR}")`)
     return response.substring(2, response.length - '" string)'.length)
   } catch (error) {
-    console.error('Error loading avatar', error)
+    // Same as use-user-cache: expected wherever the profile realm is not
+    // deployed, and the default is returned just below. console.warn raises a
+    // LogBox too, so this stays at log level.
+    console.log('No avatar for', bech32, '— using the default:', error)
   }
   return DEFAULT_AVATAR
 }
@@ -127,15 +152,18 @@ export const accountSlice = createSlice({
   extraReducers(builder) {
     builder.addCase(loggedIn.pending, (state) => {
       state.loading = true
+      state.error = undefined
       console.log('loggedIn.pending')
     })
     builder.addCase(loggedIn.fulfilled, (state, action) => {
       state.account = action.payload
       state.loading = false
+      state.error = undefined
       console.log('Logged in', action.payload)
     })
     builder.addCase(loggedIn.rejected, (state, action) => {
       state.loading = false
+      state.error = action.error.message ?? 'Sign-in failed.'
       console.error('loggedIn.rejected', action)
     })
     builder.addCase(reloadAvatar.fulfilled, (state, action) => {
@@ -151,10 +179,11 @@ export const accountSlice = createSlice({
   selectors: {
     selectAccount: (state) => state.account,
     selectAvatar: (state) => state.account?.avatar,
-    selectLoginLoading: (state) => state.loading
+    selectLoginLoading: (state) => state.loading,
+    selectLoginError: (state) => state.error
   }
 })
 
 export const { logedOut } = accountSlice.actions
 
-export const { selectAccount, selectAvatar, selectLoginLoading } = accountSlice.selectors
+export const { selectAccount, selectAvatar, selectLoginLoading, selectLoginError } = accountSlice.selectors
