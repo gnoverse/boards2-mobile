@@ -34,10 +34,9 @@ interface CreateRepostRequestParams {
   destinationBoardId: string
   repostTitle: string
   repostBody: string
-  callbackPath: string
 }
 
-export const threadRepostAndRedirectToSign = createAppAsyncThunk<void, CreateRepostRequestParams, ThunkExtra>(
+export const threadRepostAndRedirectToSign = createAppAsyncThunk<string, CreateRepostRequestParams, ThunkExtra>(
   'threadRepost/CreateRepost',
   async (props, thunkAPI) => {
     const thread = selectThreadToRepost(thunkAPI.getState() as RootState)
@@ -45,7 +44,7 @@ export const threadRepostAndRedirectToSign = createAppAsyncThunk<void, CreateRep
 
     if (!thread) throw new Error('No thread to repost')
 
-    const { destinationBoardId, repostTitle, repostBody, callbackPath } = props
+    const { destinationBoardId, repostTitle, repostBody } = props
 
     // Matches the realm signature:
     //   CreateRepost(cur realm, boardID, threadID, destinationBoardID boards.ID, title, body string)
@@ -55,6 +54,6 @@ export const threadRepostAndRedirectToSign = createAppAsyncThunk<void, CreateRep
     const args: string[] = [String(thread.boardId), String(thread.id), destinationBoardId, repostTitle, repostBody]
     const reason = 'Repost a message'
 
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )

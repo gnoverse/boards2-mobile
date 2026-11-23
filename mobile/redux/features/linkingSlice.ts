@@ -6,25 +6,25 @@ import { createSlice } from '@reduxjs/toolkit'
 import * as Linking from 'expo-linking'
 import { ThunkExtra } from '@gno/redux'
 import { issueState } from '@gno/utils/callback-state'
+import { CALLBACK_URL } from '@gno/utils/wallet-callback'
 
-// GnoConnect launch-link / callback conventions.
 const GNOKEY_SCHEME = 'land.gno.gnokey'
-const BOARDS2_CALLBACK = 'land.gno.boards2:/'
+
+/** The outcome of a wallet request, identified by the `state` of its launch link. */
+interface TxOutcome {
+  state: string
+  status: 'broadcasting' | 'committed' | 'failed'
+}
 
 interface State {
-  /** Last non-success callback, so a screen can stop waiting and say why.
-   *  `code` is the wallet's enumerated reason (`no_signer`, `tx_failed`, …),
-   *  never prose — branch on it, don't display it raw. */
-  failure: { status: string; code?: string } | undefined
-  signedTx: string | undefined
+  lastTx: TxOutcome | undefined
   bech32AddressSelected: string | undefined
   chainId: string | undefined
   remoteURL: string | undefined
 }
 
 const initialState: State = {
-  failure: undefined,
-  signedTx: undefined,
+  lastTx: undefined,
   bech32AddressSelected: undefined,
   chainId: undefined,
   remoteURL: undefined
@@ -38,7 +38,7 @@ export const requestLoginForGnokeyMobile = createAppAsyncThunk<boolean, void, Th
     const gnonative = thunkAPI.extra.gnonative
     const state = issueState()
     const url = new URL(`${GNOKEY_SCHEME}://connect`)
-    url.searchParams.append('callback', `${BOARDS2_CALLBACK}/signin-callback`)
+    url.searchParams.append('callback', CALLBACK_URL)
     url.searchParams.append('state', state)
 
     // Name the network we expect: `connect` takes rpc/chainid so the wallet can
@@ -81,11 +81,11 @@ type MakeCallTxParams = {
   memo?: string
   callerAddressBech32: string
   reason: string
-  callbackPath: string
 }
 
-export const makeCallTx = async (props: MakeCallTxParams, gnonative: GnoNativeApi): Promise<void> => {
-  const { fnc, callerAddressBech32, args, packagePath = PACKAGE_PATH, callbackPath, send } = props
+/** Returns the `state` of the request, for `useWalletTx` to follow its outcome. */
+export const makeCallTx = async (props: MakeCallTxParams, gnonative: GnoNativeApi): Promise<string> => {
+  const { fnc, callerAddressBech32, args, packagePath = PACKAGE_PATH, send } = props
 
   // GnoConnect `signtx`, the sign-only host: gnokey builds the MsgCall, the user
   // signs, and the tx comes back on `signedtx` for us to broadcast. Sign-only is
@@ -118,11 +118,12 @@ export const makeCallTx = async (props: MakeCallTxParams, gnonative: GnoNativeAp
   url.searchParams.append('rpc', await gnonative.getRemote())
   url.searchParams.append('chainid', await gnonative.getChainID())
   url.searchParams.append('signer', callerAddressBech32)
-  url.searchParams.append('callback', BOARDS2_CALLBACK + callbackPath)
+  url.searchParams.append('callback', CALLBACK_URL)
   url.searchParams.append('state', state)
 
   console.log('redirecting to: ', url.toString())
-  Linking.openURL(url.toString())
+  await Linking.openURL(url.toString())
+  return state
 }
 
 /**
@@ -152,15 +153,6 @@ async function rpc(endpoint: string, method: string, params: unknown[]): Promise
 }
 
 /**
- * UncommittedTxError is used by broadcast() for failures where the transaction didn't
- * make it into the mempool cache (so it's safe to re-try the broadcast). This is
- * distinguished from errors coming from the node where the transaction should not be re-broadcast.
- */
-class UncommittedTxError extends Error {
-  name = 'UncommittedTxError'
-}
-
-/**
  * Broadcasts a `signtx` result straight to the chain's RPC, then confirms it.
  *
  * Deliberately *not* `gnonative.broadcastTxCommit`, whose parameter is
@@ -185,49 +177,28 @@ class UncommittedTxError extends Error {
  * its own RPC. That also gives the caller a real "it is on chain" signal to
  * refetch against, which is what `_commit` was being used for.
  *
- * The callback from the transaction-signing app puts a single `signedTx` in shared
- * state. Many screens watch for this and call broadcastTxCommit. Use inFlight to
- * prevent re-broadcast.
+ * Dispatched by LinkingProvider, not by the screen which made the request: after
+ * a cold start that screen is gone, and the transaction would be lost with it.
+ * `state` is single-use, so each answer from the wallet is broadcast once.
  */
-let inFlight: { signedTx: string; result: Promise<void> } | undefined
-
-export const broadcastTxCommit = createAppAsyncThunk<void, string, ThunkExtra>(
-  'tx/broadcastTxCommit',
-  async (signedTx, thunkAPI) => {
-    if (inFlight?.signedTx !== signedTx) {
-      const attempt = { signedTx, result: broadcast(signedTx, thunkAPI.extra.gnonative) }
-      // Only UncommittedTxError can be forgotten. Otherwise, keep inFlight (even if broadcast
-      // succeeds) until a new transaction replaces it.
-      void attempt.result.catch((error) => {
-        if (!(error instanceof UncommittedTxError)) return
-        if (inFlight === attempt) inFlight = undefined
-      })
-      inFlight = attempt
-    }
-    return await inFlight.result
-  }
+export const broadcastTx = createAppAsyncThunk<void, { state: string; signedTx: string }, ThunkExtra>(
+  'tx/broadcastTx',
+  ({ signedTx }, thunkAPI) => broadcast(signedTx, thunkAPI.extra.gnonative)
 )
 
 async function broadcast(signedTx: string, gnonative: GnoNativeApi): Promise<void> {
   const remote = await gnonative.getRemote()
   const endpoint = /^https?:\/\//i.test(remote) ? remote : `http://${remote}`
 
-  let accepted
-  try {
-    accepted = await rpc(endpoint, 'broadcast_tx_sync', [signedTx])
-  } catch (error) {
-    // No answer came back, so nothing is known to have reached the node and
-    // the transaction can be sent again.
-    throw new UncommittedTxError(error instanceof Error ? error.message : String(error))
-  }
+  const accepted = await rpc(endpoint, 'broadcast_tx_sync', [signedTx])
   // CheckTx ran and refused it: bad signature, bad sequence, insufficient
   // funds. Nothing was committed and nothing will be.
   if (accepted?.error) {
-    throw new UncommittedTxError(`Transaction rejected: ${JSON.stringify(accepted.error)}`)
+    throw new Error(`Transaction rejected: ${JSON.stringify(accepted.error)}`)
   }
   const hash = accepted?.hash
   if (!hash) {
-    throw new UncommittedTxError('Broadcast returned no transaction hash.')
+    throw new Error('Broadcast returned no transaction hash.')
   }
 
   // Poll rather than assume. Until it appears in a block it has not happened,
@@ -257,14 +228,13 @@ async function broadcast(signedTx: string, gnonative: GnoNativeApi): Promise<voi
 interface GnodCallTxParams {
   post: Post
   callerAddressBech32: string
-  callbackPath: string
 }
 
-export const gnodTxAndRedirectToSign = createAppAsyncThunk<void, GnodCallTxParams, ThunkExtra>(
+export const gnodTxAndRedirectToSign = createAppAsyncThunk<string, GnodCallTxParams, ThunkExtra>(
   'tx/gnodTxAndRedirectToSign',
   async (props, thunkAPI) => {
     console.log('gnodding post: ', props.post)
-    const { post, callerAddressBech32, callbackPath } = props
+    const { post, callerAddressBech32 } = props
 
     const fnc = 'AddReaction'
     const gasFee = '1000000ugnot'
@@ -273,7 +243,7 @@ export const gnodTxAndRedirectToSign = createAppAsyncThunk<void, GnodCallTxParam
     const args: string[] = [String(post.user.address), String(post.id), String(post.id), String('0')]
     const reason = 'Gnoding a message'
 
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )
 
@@ -284,12 +254,14 @@ export const linkingSlice = createSlice({
   name: 'linking',
   initialState,
   extraReducers: (builder) => {
-    builder.addCase(broadcastTxCommit.fulfilled, (state) => {
-      state.failure = undefined
-      state.signedTx = undefined
-      state.bech32AddressSelected = undefined
-      state.chainId = undefined
-      state.remoteURL = undefined
+    builder.addCase(broadcastTx.pending, (state, action) => {
+      state.lastTx = { state: action.meta.arg.state, status: 'broadcasting' }
+    })
+    builder.addCase(broadcastTx.fulfilled, (state, action) => {
+      state.lastTx = { state: action.meta.arg.state, status: 'committed' }
+    })
+    builder.addCase(broadcastTx.rejected, (state, action) => {
+      state.lastTx = { state: action.meta.arg.state, status: 'failed' }
     })
   },
   reducers: {
@@ -297,44 +269,29 @@ export const linkingSlice = createSlice({
       const q = action.payload.queryParams ?? {}
 
       // A cancelled or failed request: record it so the screen that opened the
-      // wallet can stop waiting and explain, and leave the rest untouched so no
-      // stale address or tx is picked up.
+      // wallet can stop waiting, and leave the rest untouched so no stale address
+      // is picked up. errorReporter says why.
       if (q.status && q.status !== 'success') {
-        state.failure = { status: q.status as string, code: q.code as string | undefined }
+        state.lastTx = { state: q.state as string, status: 'failed' }
         return
       }
-      state.failure = undefined
 
       // connect: display-level identity only — the address is untrusted,
       // authority comes from the on-chain tx gnokey signs.
       if (q.address) state.bech32AddressSelected = q.address as string
-
-      // `signedtx` is base64 amino-binary — the exact parameter
-      // broadcast_tx_commit takes. The standard requires we treat it as opaque
-      // and broadcast it unmodified: decoding and re-encoding needs a client
-      // able to represent whatever scheme the wallet signed with, and a session
-      // key or multisig carries fields a generic client drops, producing a
-      // well-formed-looking but invalid transaction that fails at the last step
-      // and looks like the wallet's fault. So it is stored exactly as received.
-      if (q.signedtx) {
-        state.signedTx = q.signedtx as string
-      }
 
       if (q.chainid || q.chain_id) state.chainId = (q.chainid ?? q.chain_id) as string
       if (q.remote) state.remoteURL = q.remote as string
     },
     clearLinking: (state) => {
       console.log('clearing linking data')
-      state.failure = undefined
-      state.signedTx = undefined
       state.bech32AddressSelected = undefined
       state.chainId = undefined
       state.remoteURL = undefined
     }
   },
   selectors: {
-    selectLinkingFailure: (state: State) => state.failure,
-    selectSignedTx: (state: State) => state.signedTx as string | undefined,
+    selectLastTx: (state: State) => state.lastTx,
     selectBech32AddressSelected: (state: State) => state.bech32AddressSelected as string | undefined,
     selectChainId: (state: State) => state.chainId as string | undefined,
     selectRemoteURL: (state: State) => state.remoteURL as string | undefined
@@ -343,5 +300,4 @@ export const linkingSlice = createSlice({
 
 export const { clearLinking, setLinkingData } = linkingSlice.actions
 
-export const { selectLinkingFailure, selectSignedTx, selectBech32AddressSelected, selectChainId, selectRemoteURL } =
-  linkingSlice.selectors
+export const { selectLastTx, selectBech32AddressSelected, selectChainId, selectRemoteURL } = linkingSlice.selectors

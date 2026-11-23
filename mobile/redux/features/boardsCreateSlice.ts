@@ -45,20 +45,12 @@ export const boardsCreateSlice = createSlice({
   }
 })
 
-type BoardsResult = {
-  n_boards: number
-  boards: {
-    index: number
-    board: Board
-  }[]
-}
-
 export interface BoardCreationData {
   boardName: string
   isPublic: boolean
 }
 
-export const createBoard = createAppAsyncThunk<BoardsResult | undefined, BoardCreationData, ThunkExtra>(
+export const createBoard = createAppAsyncThunk<string, BoardCreationData, ThunkExtra>(
   'boardsCreate/create',
   async (param, thunkAPI) => {
     const { boardName, isPublic } = param
@@ -71,10 +63,7 @@ export const createBoard = createAppAsyncThunk<BoardsResult | undefined, BoardCr
     const gasFee = '100000ugnot'
     const gasWanted = BigInt(50000000)
     const reason = 'Creating a new board'
-    const callbackPath = '/boards/new'
 
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
-
-    return { n_boards: 1, boards: [] }
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )
