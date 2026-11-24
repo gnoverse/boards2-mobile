@@ -18,6 +18,8 @@ interface TxOutcome {
 
 interface State {
   lastTx: TxOutcome | undefined
+  // How many transactions landed, for `useRefreshAfterTx` to notice a new one.
+  committedTxCount: number
   bech32AddressSelected: string | undefined
   chainId: string | undefined
   remoteURL: string | undefined
@@ -25,6 +27,7 @@ interface State {
 
 const initialState: State = {
   lastTx: undefined,
+  committedTxCount: 0,
   bech32AddressSelected: undefined,
   chainId: undefined,
   remoteURL: undefined
@@ -259,6 +262,7 @@ export const linkingSlice = createSlice({
     })
     builder.addCase(broadcastTx.fulfilled, (state, action) => {
       state.lastTx = { state: action.meta.arg.state, status: 'committed' }
+      state.committedTxCount++
     })
     builder.addCase(broadcastTx.rejected, (state, action) => {
       state.lastTx = { state: action.meta.arg.state, status: 'failed' }
@@ -292,6 +296,7 @@ export const linkingSlice = createSlice({
   },
   selectors: {
     selectLastTx: (state: State) => state.lastTx,
+    selectCommittedTxCount: (state: State) => state.committedTxCount,
     selectBech32AddressSelected: (state: State) => state.bech32AddressSelected as string | undefined,
     selectChainId: (state: State) => state.chainId as string | undefined,
     selectRemoteURL: (state: State) => state.remoteURL as string | undefined
@@ -300,4 +305,5 @@ export const linkingSlice = createSlice({
 
 export const { clearLinking, setLinkingData } = linkingSlice.actions
 
-export const { selectLastTx, selectBech32AddressSelected, selectChainId, selectRemoteURL } = linkingSlice.selectors
+export const { selectLastTx, selectCommittedTxCount, selectBech32AddressSelected, selectChainId, selectRemoteURL } =
+  linkingSlice.selectors

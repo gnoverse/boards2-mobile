@@ -26,6 +26,7 @@ import { PostBase } from '@gno/types'
 import { ThreadHeaderSmall } from '@gno/components/threads/ThreadHeaderSmall'
 import ThreadCardDetails from '@gno/components/threads/cards/ThreadCardDetails'
 import ThreadCardReply from '@gno/components/threads/cards/ThreadCardReply'
+import { useRefreshAfterTx } from '@gno/hooks/use-refresh-after-tx'
 import { useWalletTx } from '@gno/hooks/use-wallet-tx'
 
 const Container = styled.View`
@@ -167,11 +168,10 @@ export default function PostDetailScreen({ boardId, threadId, commentId }: Props
     }, 2000)
   }
 
-  const replyTx = useWalletTx(() => {
-    setReplyText('')
-    refreshLater()
-  })
-  const deleteTx = useWalletTx(refreshLater)
+  useRefreshAfterTx(refreshLater)
+
+  const replyTx = useWalletTx(() => setReplyText(''))
+  const deleteTx = useWalletTx(() => {})
 
   const handleSendReply = () => {
     if (head && replyText.trim()) {
