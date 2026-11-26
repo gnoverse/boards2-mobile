@@ -2,22 +2,12 @@ import { ScrollView, StyleSheet, View } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { useGnoNativeContext } from '@gnolang/gnonative'
-import {
-  broadcastTxCommit,
-  clearLinking,
-  logedOut,
-  reloadAvatar,
-  selectAccount,
-  selectSignedTx,
-  useAppDispatch,
-  useAppSelector
-} from '@gno/redux'
+import { clearLinking, logedOut, selectAccount, useAppDispatch, useAppSelector } from '@gno/redux'
 import Layout from '@gno/components/layout'
 import { AccountBalance } from '@gno/components/settings'
 import Text from '@gno/components/text'
 import AvatarPicker from '@gno/components/avatar/avatar-picker'
 import { ProgressViewModal } from '@gno/components/view/progress'
-import { useUserCache } from '@gno/hooks/use-user-cache'
 import { Button, Spacer } from '@berty/gnonative-ui'
 
 export default function Page() {
@@ -30,9 +20,6 @@ export default function Page() {
   const navigation = useNavigation()
   const router = useRouter()
   const dispatch = useAppDispatch()
-  const signedTxFromWallet = useAppSelector(selectSignedTx)
-
-  const userCache = useUserCache()
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', async () => {
@@ -81,33 +68,10 @@ export default function Page() {
     //   avatarTxAndRedirectToSign({
     //     mimeType,
     //     base64: imageCompressed.base64,
-    //     callerAddressBech32: account.bech32,
-    //     callbackPath: pathName
+    //     callerAddressBech32: account.bech32
     //   })
     // ).unwrap()
   }
-
-  useEffect(() => {
-    ;(async () => {
-      if (signedTxFromWallet) {
-        const signedTx = signedTxFromWallet as string // opaque base64 amino-binary; broadcast unmodified
-        try {
-          await dispatch(broadcastTxCommit(signedTx)).unwrap()
-        } catch (error) {
-          console.error('on broadcastTxCommit', error)
-        }
-
-        dispatch(clearLinking())
-        userCache.invalidateCache()
-
-        setTimeout(() => {
-          console.log('reloading avatar')
-          dispatch(reloadAvatar())
-        }, 500)
-      }
-    })()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signedTxFromWallet])
 
   return (
     <>

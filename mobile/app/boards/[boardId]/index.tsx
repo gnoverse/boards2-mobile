@@ -17,6 +17,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import styled from 'styled-components/native'
 import { ListEmptyView } from '@gno/components/list/ListEmptyView'
+import { useRefreshAfterTx } from '@gno/hooks/use-refresh-after-tx'
 
 const Container = styled.View`
   padding-top: 40px;
@@ -40,12 +41,7 @@ export default function ThreadsPage() {
     dispatch(loadThreads({ board }))
   }
 
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     if (!board) return
-  //     dispatch(loadThreads({ board }))
-  //   }, [board, dispatch])
-  // )
+  useRefreshAfterTx(onRefresh)
 
   const handleReply = (thread: Post) => {
     // A reply from the list answers the thread itself, so it has no parent comment.

@@ -37,7 +37,7 @@ export type ThreadCreateParams = {
   threadBody: string
 }
 
-export const threadCreate = createAppAsyncThunk<void, ThreadCreateParams, ThunkExtra>(
+export const threadCreate = createAppAsyncThunk<string, ThreadCreateParams, ThunkExtra>(
   'threadsCreate/threadCreate',
   async (props, thunkAPI) => {
     const { boardId, threadName, threadBody } = props
@@ -48,8 +48,7 @@ export const threadCreate = createAppAsyncThunk<void, ThreadCreateParams, ThunkE
     const gasFee = '1000000ugnot'
     const gasWanted = BigInt(50000000)
     const reason = 'Post a message'
-    const callbackPath = `/boards/${boardId}/new-thread`
 
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )

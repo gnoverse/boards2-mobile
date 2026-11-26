@@ -3,14 +3,11 @@ import { Alert, ScrollView, KeyboardAvoidingView, Platform, RefreshControl } fro
 import { SafeAreaView } from 'react-native-safe-area-context'
 import styled from 'styled-components/native'
 import {
-  broadcastTxCommit,
-  clearLinking,
   deleteReplyAndRedirectToSign,
   detailKey,
   loadThreadDetail,
   selectAccount,
   selectCommentDetail,
-  selectSignedTx,
   selectThreadBoard,
   selectThreadById,
   selectThreadDetail,
@@ -23,12 +20,14 @@ import {
   useAppDispatch,
   useAppSelector
 } from '@gno/redux'
-import { usePathname, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { BREADCRUMBS } from '@gno/constants/Constants'
 import { PostBase } from '@gno/types'
 import { ThreadHeaderSmall } from '@gno/components/threads/ThreadHeaderSmall'
 import ThreadCardDetails from '@gno/components/threads/cards/ThreadCardDetails'
 import ThreadCardReply from '@gno/components/threads/cards/ThreadCardReply'
+import { useRefreshAfterTx } from '@gno/hooks/use-refresh-after-tx'
+import { useWalletTx } from '@gno/hooks/use-wallet-tx'
 
 const Container = styled.View`
   flex: 1;
@@ -123,7 +122,6 @@ export default function PostDetailScreen({ boardId, threadId, commentId }: Props
   const loading = useAppSelector((state) => selectThreadDetailLoading(state, key))
   const board = useAppSelector(selectThreadBoard)
   const account = useAppSelector(selectAccount)
-  const signedTxFromWallet = useAppSelector(selectSignedTx)
 
   // Use the cache to avoid name flashes when refreshing. It misses for a thread
   // of another board, like the one a repost points at.
@@ -137,7 +135,6 @@ export default function PostDetailScreen({ boardId, threadId, commentId }: Props
 
   const dispatch = useAppDispatch()
   const router = useRouter()
-  const callbackPath = usePathname()
 
   const [replyText, setReplyText] = useState('')
 
@@ -165,10 +162,21 @@ export default function PostDetailScreen({ boardId, threadId, commentId }: Props
     )
   }, [threadId, boardId, commentId, dispatch])
 
+  const refreshLater = () => {
+    setTimeout(() => {
+      onRefresh()
+    }, 2000)
+  }
+
+  useRefreshAfterTx(refreshLater)
+
+  const replyTx = useWalletTx(() => setReplyText(''))
+  const deleteTx = useWalletTx(() => {})
+
   const handleSendReply = () => {
     if (head && replyText.trim()) {
       dispatch(setReplyTarget(replyTarget))
-      dispatch(threadReplyAndRedirectToSign({ replyBody: replyText, callbackPath }))
+      replyTx.send(threadReplyAndRedirectToSign({ replyBody: replyText }))
     }
   }
 
@@ -190,12 +198,11 @@ export default function PostDetailScreen({ boardId, threadId, commentId }: Props
         text: 'Delete',
         style: 'destructive',
         onPress: () =>
-          dispatch(
+          deleteTx.send(
             deleteReplyAndRedirectToSign({
               boardId: Number(boardId),
               threadId: Number(threadId),
-              replyId,
-              callbackPath
+              replyId
             })
           )
       }
@@ -214,29 +221,6 @@ export default function PostDetailScreen({ boardId, threadId, commentId }: Props
     dispatch(setThreadToRepost(threadSummary))
     router.push(`/boards/${threadSummary.boardId}/threads/${threadSummary.id}/repost`)
   }
-
-  // hook to handle the signed tx from the Gnokey and broadcast it
-  useEffect(() => {
-    const handleSignedTx = async () => {
-      if (signedTxFromWallet) {
-        const signedTx = signedTxFromWallet as string // opaque base64 amino-binary; broadcast unmodified
-        console.log('signedTx: ', signedTx)
-
-        try {
-          await dispatch(clearLinking())
-          await dispatch(broadcastTxCommit(signedTx)).unwrap()
-          setReplyText('')
-          setTimeout(() => {
-            onRefresh()
-          }, 2000)
-        } catch (error) {
-          console.error('on broadcastTxCommit', error)
-        }
-      }
-    }
-    handleSignedTx()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signedTxFromWallet])
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>

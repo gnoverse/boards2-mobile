@@ -46,10 +46,9 @@ export const { selectReplyTarget, selectReplyToEdit } = threadReplySlice.selecto
 
 interface CreateReplyRequestParams {
   replyBody: string
-  callbackPath: string
 }
 
-export const threadReplyAndRedirectToSign = createAppAsyncThunk<void, CreateReplyRequestParams, ThunkExtra>(
+export const threadReplyAndRedirectToSign = createAppAsyncThunk<string, CreateReplyRequestParams, ThunkExtra>(
   'threadReply/CreateReply',
   async (props, thunkAPI) => {
     const target = selectReplyTarget(thunkAPI.getState() as RootState)
@@ -57,7 +56,7 @@ export const threadReplyAndRedirectToSign = createAppAsyncThunk<void, CreateRepl
 
     if (!target) throw new Error('No reply target')
 
-    const { replyBody, callbackPath } = props
+    const { replyBody } = props
 
     const fnc = 'CreateReply'
     const gasFee = '1000000ugnot'
@@ -65,7 +64,7 @@ export const threadReplyAndRedirectToSign = createAppAsyncThunk<void, CreateRepl
     const args: string[] = [String(target.boardId), String(target.threadId), String(target.replyId), replyBody]
     const reason = 'Reply a message'
 
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )
 
@@ -74,29 +73,24 @@ interface DeleteReplyRequestParams {
   threadId: number
   // The comment or (nested) reply to delete.
   replyId: number
-  callbackPath: string
 }
 
-export const deleteReplyAndRedirectToSign = createAppAsyncThunk<void, DeleteReplyRequestParams, ThunkExtra>(
+export const deleteReplyAndRedirectToSign = createAppAsyncThunk<string, DeleteReplyRequestParams, ThunkExtra>(
   'threadReply/DeleteReply',
   async (props, thunkAPI) => {
-    try {
-      const callerAddressBech32 = selectAccount(thunkAPI.getState() as RootState)?.bech32 as string
+    const callerAddressBech32 = selectAccount(thunkAPI.getState() as RootState)?.bech32 as string
 
-      const { boardId, threadId, replyId, callbackPath } = props
+    const { boardId, threadId, replyId } = props
 
-      // If a reply that has sub-replies, it replaces the body with a notice rather than
-      // removing it, so the post can survive the call and come back changed.
-      const fnc = 'DeleteReply'
-      const gasFee = '1000000ugnot'
-      const gasWanted = BigInt(50000000)
-      const args: string[] = [String(boardId), String(threadId), String(replyId)]
-      const reason = 'Delete a message'
+    // If a reply that has sub-replies, it replaces the body with a notice rather than
+    // removing it, so the post can survive the call and come back changed.
+    const fnc = 'DeleteReply'
+    const gasFee = '1000000ugnot'
+    const gasWanted = BigInt(50000000)
+    const args: string[] = [String(boardId), String(threadId), String(replyId)]
+    const reason = 'Delete a message'
 
-      await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
-    } catch (error) {
-      console.error('Error in deleteReplyAndRedirectToSign thunk:', error)
-    }
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )
 
@@ -106,15 +100,14 @@ interface EditReplyRequestParams {
   // The comment or (nested) reply to edit.
   replyId: number
   replyBody: string
-  callbackPath: string
 }
 
-export const editReplyAndRedirectToSign = createAppAsyncThunk<void, EditReplyRequestParams, ThunkExtra>(
+export const editReplyAndRedirectToSign = createAppAsyncThunk<string, EditReplyRequestParams, ThunkExtra>(
   'threadReply/EditReply',
   async (props, thunkAPI) => {
     const callerAddressBech32 = selectAccount(thunkAPI.getState() as RootState)?.bech32 as string
 
-    const { boardId, threadId, replyId, replyBody, callbackPath } = props
+    const { boardId, threadId, replyId, replyBody } = props
 
     const fnc = 'EditReply'
     const gasFee = '1000000ugnot'
@@ -122,6 +115,6 @@ export const editReplyAndRedirectToSign = createAppAsyncThunk<void, EditReplyReq
     const args: string[] = [String(boardId), String(threadId), String(replyId), replyBody]
     const reason = 'Edit a message'
 
-    await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason, callbackPath }, thunkAPI.extra.gnonative)
+    return await makeCallTx({ fnc, args, gasFee, gasWanted, callerAddressBech32, reason }, thunkAPI.extra.gnonative)
   }
 )

@@ -76,13 +76,12 @@ interface AvatarCallTxParams {
   mimeType: string
   base64: string
   callerAddressBech32: string
-  callbackPath: string
 }
 
-export const avatarTxAndRedirectToSign = createAppAsyncThunk<void, AvatarCallTxParams, ThunkExtra>(
+export const avatarTxAndRedirectToSign = createAppAsyncThunk<string, AvatarCallTxParams, ThunkExtra>(
   'account/avatarTxAndRedirectToSign',
   async (props, thunkAPI) => {
-    const { mimeType, base64, callerAddressBech32, callbackPath } = props
+    const { mimeType, base64, callerAddressBech32 } = props
 
     const gnonative = thunkAPI.extra.gnonative
 
@@ -91,7 +90,7 @@ export const avatarTxAndRedirectToSign = createAppAsyncThunk<void, AvatarCallTxP
     const args: string[] = ['Avatar', String(`data:${mimeType};base64,` + base64)]
     const reason = 'Upload a new avatar'
 
-    await makeCallTx(
+    return await makeCallTx(
       {
         packagePath: 'gno.land/r/demo/profile',
         fnc: 'SetStringField',
@@ -99,8 +98,7 @@ export const avatarTxAndRedirectToSign = createAppAsyncThunk<void, AvatarCallTxP
         gasFee,
         gasWanted,
         callerAddressBech32,
-        reason,
-        callbackPath
+        reason
       },
       gnonative
     )

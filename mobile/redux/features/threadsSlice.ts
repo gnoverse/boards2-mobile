@@ -85,7 +85,8 @@ export const loadThreads = createAppAsyncThunk<LoadResult | undefined, LoadThrea
       const postsRes = await fetchThreadPosts(userCache, gnonative, board.id, startIndex, totalPosts)
 
       return {
-        board,
+        // The caller's board is as old as the list it came from.
+        board: { ...board, n_threads: totalPosts },
         totalPosts,
         posts: postsRes.data,
         n_posts: postsRes.n_posts
